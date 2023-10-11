@@ -2,6 +2,9 @@
 using namespace std;
 
 wstring tetromino[7];
+int nFieldWidth = 12;
+int nFieldHeight = 18;
+unsigned char *pField = nullptr;  // dynamically allocate memory for play field
 
 int Rotate(int px, int py, int r)
 {
