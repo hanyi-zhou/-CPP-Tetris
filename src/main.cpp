@@ -1,10 +1,16 @@
 #include <iostream>
 using namespace std;
 
+#include <ncurses.h>
+#include <unistd.h>
+
 wstring tetromino[7];
 int nFieldWidth = 12;
 int nFieldHeight = 18;
 unsigned char *pField = nullptr;  // dynamically allocate memory for play field
+
+int nScreenWidth = 80;
+int nScreenHeight = 30;
 
 int Rotate(int px, int py, int r)
 {
@@ -60,7 +66,50 @@ int main()
     for (int x = 0; x < nFieldWidth; x++) // Board Boundary
         for (int y = 0; y < nFieldHeight; y++)
             pField[y*nFieldWidth + x] = (x == 0 || x == nFieldWidth - 1 || y == nFieldHeight - 1) ? 9 : 0;
-            
+
+    // Initialize the ncurses library
+    initscr();
+    raw();
+    keypad(stdscr, TRUE);
+    noecho();
+    timeout(0);
+
+    // Create a screen buffer
+    int nScreenWidth = nFieldWidth + 4;  // Add borders
+    int nScreenHeight = nFieldHeight + 2; // Add borders and bottom status bar
+    wchar_t *screen = new wchar_t[nScreenWidth * nScreenHeight];
+    for (int i = 0; i < nScreenWidth * nScreenHeight; ++i) screen[i] = L' ';
+
+    bool bGameOver = false;
+
+    // Main game loop
+    while (!bGameOver) {
+        // Draw the field
+        for (int x = 0; x < nFieldWidth; x++)
+            for (int y = 0; y < nFieldHeight; y++)
+                screen[(y + 1) * nScreenWidth + (x + 2)] = L" ABCDEFG=#"[pField[y * nFieldWidth + x]];
+
+        // Display the frame
+        clear();
+        for (int y = 0; y < nScreenHeight; ++y) {
+            for (int x = 0; x < nScreenWidth; ++x) {
+                mvaddch(y, x, screen[y * nScreenWidth + x]);
+            }
+        }
+        refresh();
+
+        // Wait for a short period (simulate frame rate)
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = 100000000; // 100 milliseconds
+        nanosleep(&ts, NULL);
+    }
+
+    // End the ncurses library
+    endwin();
+
+    // Free memory
+    delete[] screen;
 
     return 0;
 }
